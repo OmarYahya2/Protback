@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: backpro
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn backendcm.wsgi:application"
+    plan: free
+    environmentVariables:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: backpro-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: "backpro.onrender.com,omaryahya.vercel.app"
+      - key: EMAIL_HOST_USER
+        value: omar.yahya965@gmail.com
+      - key: EMAIL_HOST_PASSWORD
+        value: xpikicmlkyhgkvqo
+
+databases:
+  - name: backpro-db
+    plan: free

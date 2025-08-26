@@ -7,6 +7,8 @@ from rest_framework.permissions import AllowAny
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.response import Response
 from rest_framework import status
+from django.core.mail import send_mail
+from django.conf import settings
 
 class UserList(generics.ListCreateAPIView):
     queryset = UserProfile.objects.all()
@@ -17,10 +19,6 @@ class UserList(generics.ListCreateAPIView):
 @authentication_classes([])
 @permission_classes([AllowAny])
 def contact(request):
-    """
-    Minimal DRF endpoint for contact form submissions.
-    Upserts by email to avoid unique constraint failures.
-    """
     name = (request.data.get('name') or '').strip()
     email = (request.data.get('email') or '').strip().lower()
     message = (request.data.get('message') or '').strip()
@@ -31,21 +29,33 @@ def contact(request):
             'message': 'name, email, and message are required.'
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    # Upsert based on unique email
+    # Upsert في قاعدة البيانات
     user_profile, created = UserProfile.objects.get_or_create(
         email=email,
         defaults={'name': name, 'message': message}
     )
 
     if not created:
-        # Update existing record
-        if name:
-            user_profile.name = name
+        user_profile.name = name
         user_profile.message = message
         user_profile.save()
 
+    # إرسال الإيميل على Gmail
+    try:
+        full_message = f"From: {name} <{email}>\n\n{message}"
+        send_mail(
+            subject=f"New message from {name}",
+            message=full_message,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[settings.EMAIL_HOST_USER],
+        )
+    except Exception as e:
+        return Response({
+            'success': False,
+            'message': f"Message saved but failed to send email: {str(e)}"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     return Response({
         'success': True,
-        'message': 'Message saved successfully.' if created else 'Message updated successfully.'
+        'message': 'Message saved and email sent successfully.' if created else 'Message updated and email sent successfully.'
     }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
-
