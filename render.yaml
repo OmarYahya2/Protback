@@ -17,7 +17,7 @@ services:
       - key: DEBUG
         value: False
       - key: ALLOWED_HOSTS
-        value: "backpro.onrender.com,omaryahya.vercel.app"
+        value: "backpro-bjzn.onrender.com,omaryahya.vercel.app"
       - key: EMAIL_HOST_USER
         value: omar.yahya965@gmail.com
       - key: EMAIL_HOST_PASSWORD
